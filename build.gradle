@@ -1,0 +1,91 @@
+plugins {
+    id("java")
+}
+
+group = "org.example"
+version = "1.0-SNAPSHOT"
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/java'
+        }
+        resources {
+            srcDirs 'src/main/resources'
+        }
+    }
+
+    agent {
+        java {
+            srcDirs 'src/agent/java'
+        }
+        resources {
+            srcDirs 'src/agent/resources'
+        }
+    }
+}
+
+dependencies {
+    agentImplementation group: 'org.ow2.asm', name: 'asm', version: '9.6'
+    agentImplementation 'commons-io:commons-io:2.15.1'
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.6'
+    implementation 'commons-io:commons-io:2.15.1'
+}
+
+compileJava {
+    options.compilerArgs << '-g'
+}
+
+compileAgentJava {
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.example.Main'
+    }
+}
+
+task buildAgentJar(type: Jar) {
+    manifest {
+        attributes 'Premain-Class': 'com.dynatrace.secret.CorruptDebuggerAgent'
+    }
+    from(sourceSets.agent.output)
+}
+
+task runFinalJar(type: JavaExec) {
+    classpath = files(jar.archiveFile.get().asFile.getAbsolutePath())
+    classpath += sourceSets.main.runtimeClasspath
+    mainClass = "org.example.Main"
+    jvmArgs "-javaagent:${buildAgentJar.archiveFile.get().asFile}"
+}
+
+task runFinalJarWithMoreDebugginInformation(type: JavaExec) {
+    classpath = files(jar.archiveFile.get().asFile.getAbsolutePath())
+    classpath += sourceSets.main.runtimeClasspath
+    mainClass = "org.example.Main"
+    executable = "/home/marco/Documents/Development/repos/jdk/build/linux-x86_64-server-release/jdk/bin/java"
+    jvmArgs "-Xlog:jvmti", "-javaagent:${buildAgentJar.archiveFile.get().asFile}"
+}
+
+task runFinalJarAndWriteClassFileToDisk(type: JavaExec) {
+    classpath = files(jar.archiveFile.get().asFile.getAbsolutePath())
+    classpath += sourceSets.main.runtimeClasspath
+    mainClass = "org.example.Main"
+    jvmArgs "-javaagent:${buildAgentJar.archiveFile.get().asFile}=WriteToDisk"
+}
+
+runFinalJar.dependsOn(build)
+runFinalJarWithMoreDebugginInformation.dependsOn(build)
+runFinalJarAndWriteClassFileToDisk.dependsOn(build)
+
+// Configure the build task dependencies
+build.dependsOn(buildAgentJar)
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+
