@@ -59,14 +59,6 @@ task runFinalJar(type: JavaExec) {
     jvmArgs "-javaagent:${buildAgentJar.archiveFile.get().asFile}"
 }
 
-task runFinalJarWithMoreDebugginInformation(type: JavaExec) {
-    classpath = files(jar.archiveFile.get().asFile.getAbsolutePath())
-    classpath += sourceSets.main.runtimeClasspath
-    mainClass = "org.example.Main"
-    executable = "/home/marco/Documents/Development/repos/jdk/build/linux-x86_64-server-release/jdk/bin/java"
-    jvmArgs "-Xlog:jvmti", "-javaagent:${buildAgentJar.archiveFile.get().asFile}"
-}
-
 task runFinalJarAndWriteClassFileToDisk(type: JavaExec) {
     classpath = files(jar.archiveFile.get().asFile.getAbsolutePath())
     classpath += sourceSets.main.runtimeClasspath
